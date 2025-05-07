@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -18,7 +17,7 @@ app.use(express.static('public'));
 
 // 2. 세션 설정
 app.use(session({
-  secret: 'secret-key',
+  secret: process.env.SESSION_SECRET, // ✅ 보안상 환경 변수로 변경
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -44,12 +43,12 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/comment', commentRouter);
 
-// 5. DB 연결
+// 4. DB 연결
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB 연결 완료'))
   .catch(err => console.error('❌ MongoDB 연결 실패:', err));
 
-// 6. 서버 실행
+// 5. 서버 실행
 app.listen(PORT, () => {
-  console.log(`서버 실행 중: http://localhost:${PORT}`);
+  console.log(`✅ 서버 실행 중: 포트 ${PORT}`);
 });
