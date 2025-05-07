@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>실적 확인</title>
+  <link rel="stylesheet" href="/components/header.css" />
+  <link rel="stylesheet" href="/components/performance.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <script defer src="/components/header.js"></script>
+</head>
+<body>
+  <div id="common-header"></div>
+
+  <div class="container">
+    <div class="summary" id="summaryBox">
+      <!-- JS에서 동적으로 렌더링됩니다 -->
+    </div>
+
+    <div id="customerResults"></div>
+  </div>
+
+  <script>
+    // 공통 헤더 로드 및 로그인 확인
+    fetch('/components/header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('common-header').innerHTML = html;
+        return fetch('/auth/me', { credentials: 'include' });
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        document.getElementById('welcomeUser').innerText = `${data.user.name}님 환영합니다`;
+      })
+      .catch(() => {
+        alert('로그인이 필요합니다.');
+        location.href = '/index.html';
+      });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const picker = document.createElement('input');
+      picker.type = 'month';
+      picker.id = 'monthPicker';
+      picker.value = '2025-05';
+      picker.addEventListener('change', () => loadPerformance(picker.value));
+      document.monthPicker = picker; // 전역에 저장
+      loadPerformance(picker.value);
+    });
+
+    async function loadPerformance(ym) {
+      const res = await fetch(`/api/performance/${ym}`);
+      if (!res.ok) {
+        alert("실적 데이터를 불러오는 데 실패했습니다.");
+        return;
+      }
+
+      const { summary, customers } = await res.json();
+
+      // ✅ 상단 요약 박스 렌더링
+      const summaryBox = document.getElementById('summaryBox');
+      summaryBox.innerHTML = `
+        <div class="month-select">
+          <label for="monthPicker">월 선택: </label>
+        </div>
+        <div class="day-summary day-1">1일차: ${summary.day1 || 0}명</div>
+        <div class="day-summary day-2">2일차: ${summary.day2 || 0}명</div>
+        <div class="day-summary day-3">3일차: ${summary.day3 || 0}명</div>
+        <div class="highlight">총 순이익: ${summary.totalNet.toLocaleString()}원</div>
+      `;
+      document.querySelector('.month-select').appendChild(document.monthPicker);
+
+      // ✅ 고객 리스트 렌더링
+      const resultBox = document.getElementById('customerResults');
+      resultBox.innerHTML = '';
+      customers.forEach(c => {
+        const dayMatch = c.progress?.match(/^(\d)일차$/);
+        const dayNum = dayMatch ? dayMatch[1] : '0';
+
+        const el = document.createElement('div');
+        el.className = `customer-box day-${dayNum}`;
+
+        el.innerHTML = `
+          <h3>${c.name} <span style="font-weight: normal; color: #666;">(${c.progress})</span></h3>
+          <p>입금내역: ${c.totalDeposit.toLocaleString()}원</p>
+          <p>출금내역: ${c.totalWithdraw.toLocaleString()}원</p>
+          <p><strong>순이익: ${c.netProfit.toLocaleString()}원</strong></p>
+        `;
+        resultBox.appendChild(el);
+      });
+    }
+  </script>
+</body>
+</html>

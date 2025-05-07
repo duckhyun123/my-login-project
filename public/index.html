@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>홈페이지</title>
+  <link rel="stylesheet" href="/components/header.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background-color: #f9f9f9;
+    }
+
+    .container {
+      padding: 60px 20px 40px;
+    }
+
+    .login-form, #userInfo {
+      max-width: 300px;
+      margin: 0 auto;
+      text-align: center;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      box-sizing: border-box;
+    }
+
+    #welcome {
+      margin-top: 20px;
+      color: green;
+      font-weight: bold;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    a {
+      text-decoration: none;
+      color: #0066cc;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="common-header"></div>
+
+  <div class="container">
+    <div class="login-form" id="loginBox">
+      <h2>🔐 로그인</h2>
+      <input type="text" id="username" placeholder="아이디" />
+      <input type="password" id="password" placeholder="비밀번호" />
+      <button onclick="login()">로그인</button>
+      <p style="margin-top: 15px; font-size: 14px;">
+        아직 계정이 없으신가요? <br />
+        <a href="/signup.html">👉 회원가입 하러가기</a>
+      </p>
+    </div>
+
+    <div id="userInfo" style="display:none;">
+      <p id="welcome"></p>
+      <button onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <script src="/components/header.js"></script>
+  <script>
+    // 로그인 요청
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("userInfo").style.display = "block";
+        document.getElementById("welcome").innerText = `${data.user.name}님 환영합니다!`;
+      } else {
+        alert(data.message || "로그인 실패");
+      }
+    }
+
+    // 로그아웃
+    async function logout() {
+      await fetch("/auth/logout", { method: "POST", credentials: "include" });
+      document.getElementById("loginBox").style.display = "block";
+      document.getElementById("userInfo").style.display = "none";
+      document.getElementById("welcome").innerText = "";
+    }
+
+    // 로그인 상태 확인
+    async function checkLogin() {
+      const res = await fetch("/auth/me", { credentials: "include" });
+
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("userInfo").style.display = "block";
+        document.getElementById("welcome").innerText = `${data.user.name}님 환영합니다!`;
+      }
+    }
+    document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      login();
+    }
+  });
+
+    window.onload = checkLogin;
+  </script>
+</body>
+</html>

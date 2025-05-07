@@ -1,0 +1,241 @@
+/* 게시글 상세 컨테이너 */
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 30px 40px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  /* 제목 */
+  .container h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #222;
+  }
+  
+  /* 작성자 / 날짜 + 수정/삭제 버튼 */
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .meta-row p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .meta-row .btn-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .meta-row button {
+    font-size: 13px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: #ced4da;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .meta-row button:hover {
+    background-color: #adb5bd;
+  }
+  
+  /* 게시글 내용 */
+  #content {
+    white-space: pre-wrap;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #333;
+    margin: 30px 0;
+  }
+  
+  /* 목록 버튼 */
+  #backBtn {
+    margin-top: 20px;
+    background-color: transparent;
+    color: #007bff;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+  
+  #backBtn:hover {
+    color: #0056b3;
+  }
+  
+  /* 댓글 영역 헤더 */
+  h3 {
+    font-size: 18px;
+    margin-top: 40px;
+    margin-bottom: 10px;
+    color: #444;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* 댓글 리스트 */
+  #commentList {
+    margin-top: 20px;
+  }
+  
+  .comment-item {
+    border-top: 1px solid #eee;
+    padding: 15px 0;
+    font-size: 14px;
+  }
+  
+  .comment-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .comment-meta .info {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .comment-meta .date {
+    color: #999;
+    font-size: 13px;
+  }
+  
+  /* 댓글 본문 */
+  .comment-text {
+    margin-top: 6px;
+    color: #444;
+    line-height: 1.5;
+    margin-left: 4px;
+  }
+  
+  /* 댓글 액션 버튼 */
+  .comment-actions {
+    margin-top: 8px;
+    text-align: right;
+  }
+  
+  .comment-actions button {
+    font-size: 12px;
+    padding: 5px 10px;
+    margin-left: 5px;
+    background-color: #ced4da;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .comment-actions button:hover {
+    background-color: #adb5bd;
+  }
+  
+  /* 댓글 입력창 영역 */
+  .comment-input {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #fafafa;
+  }
+  
+  .comment-input textarea {
+    width: 100%;
+    height: 100px;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    background-color: #fff;
+    box-sizing: border-box; 
+  }
+  
+  .comment-input button {
+    align-self: flex-end;
+    padding: 8px 20px;
+    background-color: #74c69d;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .comment-input button:hover {
+    background-color: #52b788;
+  }
+  
+  /* 수정 폼 */
+  #editForm {
+    display: none;
+    margin: 30px 0;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fdfdfd;
+  }
+  
+  #editForm textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+  }
+  
+  #editForm .edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  #editForm .edit-actions button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  #editForm .save-btn {
+    background-color: #4dabf7;
+    color: white;
+  }
+  
+  #editForm .save-btn:hover {
+    background-color: #339af0;
+  }
+  
+  #editForm .cancel-btn {
+    background-color: #dee2e6;
+    color: #333;
+  }
+  
+  #editForm .cancel-btn:hover {
+    background-color: #ced4da;
+  }
+  

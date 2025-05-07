@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>오늘의 기록</title>
+  <link rel="stylesheet" href="/components/header.css" />
+  <link rel="stylesheet" href="/components/today.css" />
+  <script defer src="/components/header.js"></script>
+</head>
+<body>
+  <!-- 공통 헤더 -->
+  <div id="common-header"></div>
+
+  <!-- 본문 영역 -->
+  <div class="container">
+    <!-- 좌측: 기록 입력 -->
+    <div class="left">
+      <h2>기록 입력</h2>
+      <label><span>날짜:</span> <input type="date" id="date" /></label>
+      <label><span>친구추가 보낸 수량:</span> <input type="number" id="addCount" /></label>
+      <label><span>친구추가 수락 수량:</span> <input type="number" id="acceptCount" /></label>
+      <label><span>카톡 추가 수량:</span> <input type="number" id="kakaoCount" /></label>
+      <label><span>네이버 라인 추가 수량:</span> <input type="number" id="lineCount" /></label>
+      <label><span>진행방법 알려준 수량:</span> <input type="number" id="guideCount" /></label>
+      <label><span>1일차:</span> <input type="text" id="day1" class="short-input" /></label>
+      <label><span>2일차:</span> <input type="text" id="day2" class="short-input" /></label>
+      <label><span>3일차:</span> <input type="text" id="day3" class="short-input" /></label>
+
+      <!-- ✅ 총결 라벨 + 텍스트박스를 한 줄에 배치 -->
+      <div class="summary-row">
+        <span class="summary-label-text">총결:</span>
+        <textarea id="summary" class="summary-input-textarea"></textarea>
+      </div>
+
+      <!-- 정산내용 복사 버튼 -->
+      <div class="summary-button">
+        <button onclick="copySummary()">정산내용 복사하기</button>
+      </div>
+    </div>
+
+    <!-- 우측: 고객 등록 -->
+    <div class="right">
+      <h2>고객 등록</h2>
+      <label><span>고객 이름:</span> <input type="text" id="custName" /></label>
+      <label><span>진행상황:</span>
+        <select id="custProgress">
+          <option>1일차</option>
+          <option>2일차</option>
+          <option>3일차</option>
+        </select>
+      </label>
+      <label><span>고객 계좌:</span> <input type="text" id="custAccount" /></label>
+      <label><span>고객 입금 내역:</span> <input type="number" id="custDeposit" value="0" /></label>
+      <label><span>고객 출금 내역:</span> <input type="number" id="custWithdraw" value="0" /></label>
+
+      <div class="register-button-wrapper">
+        <button class="register-button" onclick="registerCustomer()">고객 등록</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 스크립트 -->
+  <script>
+    fetch('/components/header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('common-header').innerHTML = html;
+        return fetch('/auth/me', { credentials: 'include' });
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        document.getElementById('welcomeUser').innerText = `${data.user.name}님 환영합니다`;
+      })
+      .catch(() => {
+        alert('로그인이 필요합니다.');
+        location.href = '/index.html';
+      });
+
+    window.onload = () => {
+      const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })
+        .split('. ').map(n => n.padStart(2, '0')).join('-').replace('.', '');
+      document.getElementById('date').value = today;
+    };
+
+    function copySummary() {
+      const text = `
+日期/날짜: ${document.getElementById("date").value}
+添加好友数量 / 친구추가 보낸 수량: ${document.getElementById("addCount").value}
+通过好友数量 / 친구추가 수락 수량: ${document.getElementById("acceptCount").value}
+添加KK/TG / 카톡 추가 수량: ${document.getElementById("kakaoCount").value}
+添加naverline / 네이버 라인 추가 수량: ${document.getElementById("lineCount").value}
+切入数量 / 진행방법 알려준 수량: ${document.getElementById("guideCount").value}
+第1天 / 1일차: ${document.getElementById("day1").value}
+第2天 / 2일차: ${document.getElementById("day2").value}
+第3天 / 3일차: ${document.getElementById("day3").value}
+总结 / 총결: ${document.getElementById("summary").value}`;
+      navigator.clipboard.writeText(text).then(() => alert("정산 내용이 복사되었습니다!"));
+    }
+
+    async function registerCustomer() {
+      const name = document.getElementById("custName").value.trim();
+      const progress = document.getElementById("custProgress").value;
+      const joinDate = new Date().toISOString().slice(0, 10);
+      const account = document.getElementById("custAccount").value.trim();
+      const deposits = [{ date: joinDate, amount: parseInt(document.getElementById("custDeposit").value) || 0 }];
+      const withdraws = [{ date: joinDate, amount: parseInt(document.getElementById("custWithdraw").value) || 0 }];
+
+      if (!name) return alert("고객 이름을 입력해주세요.");
+
+      try {
+        const res = await fetch('/api/customers', { credentials: 'include' });
+        const all = await res.json();
+        if (all.find(c => c.name === name)) return alert("이미 등록된 고객입니다.");
+
+        const result = await fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ name, joinDate, progress, account, deposits, withdraws })
+        });
+
+        if (result.ok) {
+          alert("고객이 등록되었습니다!");
+          document.getElementById("custName").value = "";
+          document.getElementById("custDeposit").value = "0";
+          document.getElementById("custWithdraw").value = "0";
+          document.getElementById("custProgress").value = "1일차";
+        } else {
+          alert("등록 실패. 서버 오류가 발생했습니다.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("네트워크 오류가 발생했습니다.");
+      }
+    }
+  </script>
+</body>
+</html>

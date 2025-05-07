@@ -1,0 +1,67 @@
+.header {
+    background-color: #f8f9fa;
+    color: #333;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    font-family: 'Segoe UI', sans-serif;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    height: 50px;
+  }
+  
+  .header .menu {
+    display: flex;
+    gap: 24px;
+    font-size: 15px;
+  }
+  
+  .header .menu a {
+    position: relative;
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    line-height: 1;
+  }
+  
+  .header .menu a:hover {
+    background-color: #007bff;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+  }
+  
+  /* 유저 환영 텍스트 */
+  .welcome {
+    font-size: 14px;
+    color: #28a745;
+    white-space: nowrap;
+    margin-right: 1%
+  }
+  
+  /* 로그아웃 버튼 */
+  .logout-btn {
+    padding: 4px 10px;
+    font-size: 13px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin-right: 5%;
+  }
+  
+  .logout-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+  }
+  

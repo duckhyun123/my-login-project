@@ -1,0 +1,139 @@
+/* 기본 설정 */
+body {
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+    margin: 0;
+    background-color: #f9fafb;
+    color: #333;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 80px auto 0 auto; /* 상단 고정 메뉴로부터 거리 확보 */
+    padding: 20px;
+  }
+  
+  /* 요약 영역 (월 선택 + 일차 요약 + 총 순이익) */
+  .summary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: #eef2f6;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* 월 선택 라벨 */
+  .month-select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+  
+  input[type="month"] {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  
+  /* =============================
+     ▒ 일차별 요약 박스 색상 구분 ▒
+     ============================= */
+  .day-summary.day-1 {
+    background-color: #e0f2fe; /* 연한 하늘 */
+    color: #0369a1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+  
+  .day-summary.day-2 {
+    background-color: #fef9c3; /* 연한 노랑 */
+    color: #92400e;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+  
+  .day-summary.day-3 {
+    background-color: #f3e8ff; /* 연한 보라 */
+    color: #7e22ce;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+  
+  /* =============================
+     ▒ 총 순이익 강조 박스 ▒
+     ============================= */
+  .summary .highlight {
+    background-color: #ecfdf5;
+    color: #16a34a;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  
+  /* =============================
+     ▒ 고객 정보 박스 ▒
+     ============================= */
+  .customer-box {
+    border-left: 5px solid #3b82f6;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    background: #fff;
+  }
+  
+  /* 일차에 따라 고객 박스 배경색 변경 */
+  .customer-box.day-1 {
+    border-left-color: #38bdf8;
+    background-color: #f0faff;
+  }
+  
+  .customer-box.day-2 {
+    border-left-color: #facc15;
+    background-color: #fffbeb;
+  }
+  
+  .customer-box.day-3 {
+    border-left-color: #c084fc;
+    background-color: #f8f5ff;
+  }
+  
+  .customer-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+  
+  .customer-box h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #1e3a8a;
+  }
+  
+  .customer-box p {
+    margin: 4px 0;
+    font-size: 0.95rem;
+  }
+  
+  .customer-box strong {
+    color: #10b981;
+  }
+  

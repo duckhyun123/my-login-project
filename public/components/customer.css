@@ -1,0 +1,214 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #f4f6f8;
+    padding-top: 60px;
+  }
+  
+  .main {
+    display: flex;
+    justify-content: center;
+    transition: all 0.4s ease;
+  }
+  
+  .sidebar {
+    width: 90%;
+    max-width: 1000px;
+    background: #fff;
+    padding: 20px;
+    border-right: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    transition: all 0.4s ease;
+  }
+  
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .new-customer-btn {
+    padding: 6px 14px;
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .new-customer-btn:hover {
+    background-color: #115293;
+  }
+  
+  /* ✅ 헤더 라벨 */
+  .customer-header {
+    display: grid;
+    grid-template-columns: 1fr 3fr 0.8fr 1fr 1fr 1fr;
+    font-weight: bold;
+    padding: 12px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    text-align: center;
+    font-size: 14px;
+  }
+  
+  #customerList .customer {
+    display: grid;
+    grid-template-columns: 1fr 3fr 0.8fr 1fr 1fr 1fr;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    text-align: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  #customerList .customer:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  }
+  
+  .customer[data-progress="1일차"] {
+    background: #e3f2fd;
+  }
+  .customer[data-progress="2일차"] {
+    background: #fff9c4;
+  }
+  .customer[data-progress="3일차"] {
+    background: #f3e5f5;
+  }
+  .customer.active {
+    border: 2px solid #1976d2;
+  }
+  
+  /* 세부 정보 영역 */
+  .details {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+  .details.active {
+    width: 650px;
+    opacity: 1;
+    padding: 20px;
+    background: #fff;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  .details-header h2 {
+    font-size: 18px;
+    margin: 0;
+  }
+  
+  .close-button {
+    background: #d32f2f;
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  label {
+    font-weight: 600;
+    margin: 6px 0 2px;
+    display: block;
+    font-size: 13px;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    box-sizing: border-box;
+  }
+  
+  .readonly {
+    background: #f0f0f0;
+  }
+  
+  .history-section {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .history-box {
+    flex: 1;
+  }
+  .history-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 6px;
+    border: 1px solid #ddd;
+    padding: 8px;
+    background: #fafafa;
+  }
+  .history-item {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .history-item input {
+    flex: 1;
+    padding: 6px 8px;
+  }
+  .history-item button {
+    font-size: 12px;
+    padding: 6px 8px;
+    height: 32px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .add-button {
+    background: #2196f3 !important;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    padding: 4px 8px;
+    margin-left: 5px;
+    cursor: pointer;
+  }
+  
+  .details button {
+    font-size: 13px;
+    padding: 6px 12px;
+    margin-right: 8px;
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .details button:hover {
+    background: #1565c0;
+  }
+  .details button:last-of-type {
+    background: #d32f2f;
+  }
+  .details button:last-of-type:hover {
+    background: #b71c1c;
+  }
+  

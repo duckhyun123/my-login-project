@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>월별 기록</title>
+  <link rel="stylesheet" href="/components/header.css" />
+  <link rel="stylesheet" href="/components/monthly.css" />
+  <script defer src="/components/header.js"></script>
+</head>
+<body>
+  <!-- 공통 헤더 -->
+  <div id="common-header"></div>
+
+  <!-- 월 선택 -->
+  <div class="controls">
+    <label for="monthSelect">🗓 월 선택:</label>
+    <input type="month" id="monthSelect">
+  </div>
+
+  <!-- 본문 영역 -->
+  <div class="container">
+    <div class="details" id="detailsPanel">
+      <button class="close-btn" onclick="closeDetails()">닫기</button>
+      <h3 id="selectedDate">선택된 날짜</h3>
+      <div id="detailsContent"></div>
+    </div>
+
+    <div class="calendar">
+      <div class="month-nav">
+        <button id="prevMonthBtn">◀</button>
+        <h2 id="calendarTitle">달력</h2>
+        <button id="nextMonthBtn">▶</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+          </tr>
+        </thead>
+        <tbody id="calendarBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    fetch('/components/header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('common-header').innerHTML = html;
+        return fetch('/auth/me', { credentials: 'include' });
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        document.getElementById('welcomeUser').innerText = `${data.user.name}님 환영합니다`;
+      })
+      .catch(() => {
+        alert('로그인이 필요합니다.');
+        location.href = '/index.html';
+      });
+
+    const calendarTitle = document.getElementById('calendarTitle');
+    const calendarBody = document.getElementById('calendarBody');
+    const monthInput = document.getElementById('monthSelect');
+    const today = new Date();
+    const defaultMonth = today.toISOString().slice(0, 7);
+    monthInput.value = defaultMonth;
+
+    function formatYearMonth(year, month) {
+      return `${year}년 ${month + 1}월`;
+    }
+
+    function generateCalendar(year, month) {
+      calendarTitle.innerText = formatYearMonth(year, month);
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+
+      let day = 1;
+      let html = '';
+
+      for (let i = 0; i < 6; i++) {
+        html += '<tr>';
+        for (let j = 0; j < 7; j++) {
+          if ((i === 0 && j < firstDay) || day > lastDate) {
+            html += '<td></td>';
+          } else {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const data = window.monthlyData?.[dateStr];
+            const income = data?.income ?? 0;
+            const expense = data?.expense ?? 0;
+            const net = income - expense;
+
+            html += `<td onclick="showDetails('${dateStr}')">`;
+            html += `<div class="date-number">${day}</div>`;
+
+            if (income || expense) {
+              if (expense) html += `<div class="expense">-${expense.toLocaleString()}원</div>`;
+              if (income) html += `<div class="income">+${income.toLocaleString()}원</div>`;
+              html += `<div class="net">${net >= 0 ? '+' : ''}${net.toLocaleString()}원</div>`;
+            }
+
+            html += '</td>';
+            day++;
+          }
+        }
+        html += '</tr>';
+        if (day > lastDate) break;
+      }
+
+      calendarBody.innerHTML = html;
+
+      const now = new Date();
+      const isThisMonth = year === now.getFullYear() && month === now.getMonth();
+      document.getElementById('nextMonthBtn').disabled = isThisMonth;
+    }
+
+    function showDetails(dateStr) {
+      const details = window.monthlyData?.[dateStr];
+      const panel = document.getElementById('detailsPanel');
+      document.getElementById('selectedDate').innerText = `${dateStr} 세부 내역`;
+
+      if (details) {
+        let html = '';
+        for (const d of details.details) {
+          html += `<p><strong>${d.name}</strong> - ${d.type}: ${d.amount.toLocaleString()}원</p>`;
+        }
+        html += '<hr>';
+        const income = details.income ?? 0;
+        const expense = details.expense ?? 0;
+        const net = income - expense;
+
+        html += `<p><strong>총 입금:</strong> <span class="income">+${income.toLocaleString()}원</span></p>`;
+        html += `<p><strong>총 출금:</strong> <span class="expense">-${expense.toLocaleString()}원</span></p>`;
+        html += `<p><strong>순이익:</strong> <span class="net">${net >= 0 ? '+' : ''}${net.toLocaleString()}원</span></p>`;
+        document.getElementById('detailsContent').innerHTML = html;
+      } else {
+        document.getElementById('detailsContent').innerHTML = '데이터 없음';
+      }
+
+      panel.classList.add('open');
+    }
+
+    function closeDetails() {
+      const panel = document.getElementById('detailsPanel');
+      panel.classList.remove('open');
+      setTimeout(() => {
+        document.getElementById('detailsContent').innerHTML = '';
+        document.getElementById('selectedDate').innerText = '선택된 날짜';
+      }, 300);
+    }
+
+    function loadMonthlyData(year, month) {
+      const ym = `${year}-${String(month).padStart(2, '0')}`;
+      fetch(`/api/monthly/${ym}`)
+        .then(res => res.json())
+        .then(data => {
+          window.monthlyData = data;
+          generateCalendar(year, month - 1);
+        });
+    }
+
+    monthInput.addEventListener('change', () => {
+      const [year, month] = monthInput.value.split('-').map(Number);
+      loadMonthlyData(year, month);
+    });
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      const [year, month] = monthInput.value.split('-').map(Number);
+      const prevDate = new Date(year, month - 2, 1);
+      monthInput.value = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+      loadMonthlyData(prevDate.getFullYear(), prevDate.getMonth() + 1);
+    });
+
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      const [year, month] = monthInput.value.split('-').map(Number);
+      const nextDate = new Date(year, month, 1);
+      const now = new Date();
+      if (nextDate > now) return;
+
+      monthInput.value = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
+      loadMonthlyData(nextDate.getFullYear(), nextDate.getMonth() + 1);
+    });
+
+    const [initYear, initMonth] = defaultMonth.split('-').map(Number);
+    loadMonthlyData(initYear, initMonth);
+  </script>
+</body>
+</html>

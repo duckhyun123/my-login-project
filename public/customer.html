@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <base href="/" />
+  <title>고객 관리</title>
+  <link rel="stylesheet" href="/components/header.css" />
+  <link rel="stylesheet" href="/components/customer.css" />
+  <script defer src="/components/header.js"></script>
+</head>
+<body>
+  <div id="common-header"></div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>고객 명단</h3>
+        <button class="new-customer-btn" onclick="initNewCustomer()">신규 고객</button>
+      </div>
+
+      <div class="customer-header">
+        <div>가입일</div>
+        <div>이름</div>
+        <div>진행상황</div>
+        <div>입금합계</div>
+        <div>출금합계</div>
+        <div>순수이익</div>
+      </div>
+
+      <div id="customerList"></div>
+    </div>
+
+    <div class="details slide-in" id="details">
+      <div class="details-header">
+        <h2 id="customerName">고객 상세</h2>
+        <button class="close-button" onclick="document.getElementById('details').classList.remove('active'); removeCustomerHighlight()">닫기</button>
+      </div>
+
+      <label>이름: <input id="name" /></label>
+      <label>가입일: <input type="date" id="joinDate" /></label>
+      <label>진행상황:
+        <select id="progress">
+          <option>1일차</option>
+          <option>2일차</option>
+          <option>3일차</option>
+        </select>
+      </label>
+      <label>계좌번호: <input id="account" /></label>
+
+      <div class="history-section">
+        <div class="history-box">
+          <label>입금 내역 <button class="add-button" onclick="addHistory('deposit')">추가</button></label>
+          <div id="depositList" class="history-list"></div>
+        </div>
+        <div class="history-box">
+          <label>출금 내역 <button class="add-button" onclick="addHistory('withdraw')">추가</button></label>
+          <div id="withdrawList" class="history-list"></div>
+        </div>
+      </div>
+
+      <label>입금 합계 <input id="totalDeposit" readonly class="readonly" /></label>
+      <label>출금 합계 <input id="totalWithdraw" readonly class="readonly" /></label>
+      <label>순수 이익 <input id="net" readonly class="readonly" /></label>
+
+      <button onclick="saveCustomer()">저장</button>
+      <button onclick="deleteCustomer()">삭제</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:5000';
+    let selectedCustomerName = null;
+
+    fetch('/components/header.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('common-header').innerHTML = html;
+        return fetch(`${API_BASE_URL}/auth/me`, { credentials: 'include' });
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        document.getElementById('welcomeUser').innerText = `${data.user.name}님 환영합니다`;
+        loadCustomers();
+      })
+      .catch(() => {
+        alert('로그인이 필요합니다.');
+        location.href = '/index.html';
+      });
+
+    function loadCustomers() {
+      fetch(`${API_BASE_URL}/api/customers`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById('customerList');
+          list.innerHTML = '';
+
+          data.forEach(customer => {
+            const totalDeposit = (customer.deposits || []).reduce((sum, d) => sum + (parseInt(d.amount) || 0), 0);
+            const totalWithdraw = (customer.withdraws || []).reduce((sum, d) => sum + (parseInt(d.amount) || 0), 0);
+            const net = totalDeposit - totalWithdraw;
+
+            const div = document.createElement('div');
+            div.className = 'customer';
+            div.setAttribute('data-progress', customer.progress || '');
+            div.innerHTML = `
+              <div>${customer.joinDate?.slice(0, 10) || '-'}</div>
+              <div>${customer.name}</div>
+              <div>${customer.progress || '-'}</div>
+              <div>${totalDeposit.toLocaleString()}원</div>
+              <div>${totalWithdraw.toLocaleString()}원</div>
+              <div>${net.toLocaleString()}원</div>
+            `;
+            div.onclick = () => {
+              document.querySelectorAll('#customerList .customer').forEach(el => el.classList.remove('active'));
+              div.classList.add('active');
+              selectCustomer(customer);
+            };
+            list.appendChild(div);
+          });
+        });
+    }
+
+    function initNewCustomer() {
+      selectedCustomerName = null;
+      document.getElementById('details').classList.add('active', 'slide-in');
+      document.querySelectorAll('#customerList .customer').forEach(el => el.classList.remove('active'));
+      document.getElementById('customerName').innerText = '신규 고객 등록';
+      document.getElementById('name').value = '';
+      document.getElementById('joinDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('progress').value = '1일차';
+      document.getElementById('account').value = '';
+      document.getElementById('depositList').innerHTML = '';
+      document.getElementById('withdrawList').innerHTML = '';
+      updateTotals();
+    }
+
+    function selectCustomer(customer) {
+      selectedCustomerName = customer.name;
+      const detailPanel = document.getElementById('details');
+      detailPanel.classList.add('active', 'slide-in');
+      document.getElementById('customerName').innerText = `${customer.name} 상세 정보`;
+      document.getElementById('name').value = customer.name;
+      document.getElementById('joinDate').value = customer.joinDate?.slice(0, 10);
+      document.getElementById('progress').value = customer.progress || '1일차';
+      document.getElementById('account').value = customer.account || '';
+
+      const depositList = document.getElementById('depositList');
+      const withdrawList = document.getElementById('withdrawList');
+      depositList.innerHTML = '';
+      withdrawList.innerHTML = '';
+
+      (customer.deposits || []).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+          <input type="date" value="${item.date}" />
+          <input type="number" value="${item.amount}" />
+          <button onclick="this.parentNode.remove(); updateTotals()">삭제</button>`;
+        depositList.appendChild(div);
+      });
+
+      (customer.withdraws || []).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+          <input type="date" value="${item.date}" />
+          <input type="number" value="${item.amount}" />
+          <button onclick="this.parentNode.remove(); updateTotals()">삭제</button>`;
+        withdrawList.appendChild(div);
+      });
+
+      updateTotals();
+    }
+
+    function addHistory(type) {
+      const list = document.getElementById(type + 'List');
+      const now = new Date().toISOString().slice(0, 10);
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `
+        <input type="date" value="${now}" />
+        <input type="number" placeholder="금액" />
+        <button onclick="this.parentNode.remove(); updateTotals()">삭제</button>`;
+      list.appendChild(div);
+    }
+
+    function updateTotals() {
+      let totalDeposit = 0;
+      let totalWithdraw = 0;
+
+      document.querySelectorAll('#depositList .history-item').forEach(item => {
+        const val = parseInt(item.querySelector('input[type="number"]').value || 0);
+        totalDeposit += val;
+      });
+
+      document.querySelectorAll('#withdrawList .history-item').forEach(item => {
+        const val = parseInt(item.querySelector('input[type="number"]').value || 0);
+        totalWithdraw += val;
+      });
+
+      document.getElementById('totalDeposit').value = `${totalDeposit.toLocaleString()}원`;
+      document.getElementById('totalWithdraw').value = `${totalWithdraw.toLocaleString()}원`;
+      document.getElementById('net').value = `${(totalDeposit - totalWithdraw).toLocaleString()}원`;
+    }
+
+    function saveCustomer() {
+      const name = document.getElementById('name').value.trim();
+      const joinDate = document.getElementById('joinDate').value;
+      const progress = document.getElementById('progress').value;
+      const account = document.getElementById('account').value;
+
+      if (!name || !joinDate) {
+        alert('이름과 가입일은 필수입니다.');
+        return;
+      }
+
+      const deposits = Array.from(document.querySelectorAll('#depositList .history-item')).map(p => {
+        const date = p.querySelector('input[type="date"]').value;
+        const amount = parseInt(p.querySelector('input[type="number"]').value);
+        return { date, amount: isNaN(amount) ? 0 : amount };
+      });
+
+      const withdraws = Array.from(document.querySelectorAll('#withdrawList .history-item')).map(p => {
+        const date = p.querySelector('input[type="date"]').value;
+        const amount = parseInt(p.querySelector('input[type="number"]').value);
+        return { date, amount: isNaN(amount) ? 0 : amount };
+      });
+
+      const customerData = { name, joinDate, progress, account, deposits, withdraws };
+      fetch(`${API_BASE_URL}/api/customers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(customerData)
+      })
+      .then(res => {
+        if (res.ok) return res.json();
+        if (res.status === 409) throw new Error('duplicate');
+        throw new Error('failed');
+      })
+      .then(() => {
+        alert('저장되었습니다.');
+        loadCustomers();
+      })
+      .catch(err => {
+        if (err.message === 'duplicate') alert('이미 등록된 고객입니다.');
+        else alert('저장에 실패했습니다.');
+      });
+    }
+
+    function deleteCustomer() {
+      const name = document.getElementById('name').value.trim();
+      if (!name) return alert('삭제할 고객 이름이 없습니다.');
+
+      const confirmText = prompt(`정말로 [${name}] 고객을 삭제하시려면 "삭제한다"를 입력하세요.`);
+      if (confirmText !== '삭제한다') {
+        alert('삭제가 취소되었습니다.');
+        return;
+      }
+
+      fetch(`${API_BASE_URL}/api/customers/${encodeURIComponent(name)}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('삭제 실패');
+        return res.json();
+      })
+      .then(() => {
+        alert(`${name} 고객이 삭제되었습니다.`);
+        document.getElementById('details').classList.remove('active', 'slide-in');
+        document.querySelectorAll('#customerList .customer').forEach(el => el.classList.remove('active'));
+        loadCustomers();
+      })
+      .catch(err => {
+        alert('삭제 중 오류가 발생했습니다.');
+        console.error(err);
+      });
+    }
+  </script>
+</body>
+</html>

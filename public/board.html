@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>게시판</title>
+  <link rel="stylesheet" href="/components/header.css" />
+  <link rel="stylesheet" href="/components/board.css" />
+  <script defer src="/components/header.js"></script>
+</head>
+<body>
+  <div id="common-header"></div>
+
+  <!-- 글쓰기 버튼 -->
+  <div class="board-header">
+    <button id="writeBtn" class="board-button" style="display: none;" onclick="toggleWriteForm()">글쓰기</button>
+  </div>
+
+  <!-- 게시글 목록 -->
+  <div class="board-container">
+    <div class="post-list">
+      <table>
+        <thead>
+          <tr>
+            <th>제목</th>
+            <th>작성자</th>
+            <th>작성일</th>
+          </tr>
+        </thead>
+        <tbody id="postList"></tbody>
+      </table>
+    </div>
+
+    <!-- 글쓰기 폼 -->
+    <div id="writeForm" class="slide-form">
+      <button class="close-btn" onclick="toggleWriteForm()">×</button>
+      <h3>게시글 작성</h3>
+      <label>제목: <input type="text" id="title" /></label>
+      <label>내용:<br><textarea id="content" rows="5"></textarea></label>
+      <button class="submit-button" onclick="submitPost()">작성 완료</button>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/post';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 공통 헤더 삽입 + 로그인 체크
+      fetch('/components/header.html')
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById('common-header').innerHTML = html;
+          return fetch('/auth/me', { credentials: 'include' });
+        })
+        .then(res => {
+          if (!res.ok) throw new Error();
+          return res.json();
+        })
+        .then(data => {
+          window.currentUser = data.user;
+          document.getElementById('writeBtn').style.display = 'inline-block';
+          loadPosts();
+        })
+        .catch(() => {
+          alert('로그인이 필요합니다.');
+          location.href = '/index.html';
+        });
+    });
+
+    function loadPosts() {
+      fetch(API_URL, { credentials: 'include' })
+        .then(res => res.json())
+        .then(posts => {
+          const tbody = document.getElementById('postList');
+          tbody.innerHTML = '';
+          posts.forEach(post => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><a href="/post-view.html?id=${post._id}">${post.title}</a></td>
+              <td>${post.authorName}</td>
+              <td>${new Date(post.createdAt).toLocaleDateString()}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function toggleWriteForm() {
+      document.getElementById('writeForm').classList.toggle('active');
+    }
+
+    function submitPost() {
+      const title = document.getElementById('title').value.trim();
+      const content = document.getElementById('content').value.trim();
+      if (!title || !content) return alert('제목과 내용을 모두 입력하세요.');
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ title, content })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        alert('게시글이 등록되었습니다!');
+        document.getElementById('title').value = '';
+        document.getElementById('content').value = '';
+        toggleWriteForm();
+        loadPosts();
+      })
+      .catch(() => alert('게시글 등록에 실패했습니다.'));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>게시글 보기</title>
+  <link rel="stylesheet" href="/components/header.css" />
+  <link rel="stylesheet" href="/components/post-view.css" />
+  <script defer src="/components/header.js"></script>
+</head>
+<body>
+  <div id="common-header"></div>
+
+  <div class="container">
+    <!-- 제목 및 작성자 + 버튼 -->
+    <h2 id="title"></h2>
+    <div class="meta-row">
+      <p><strong>작성자:</strong> <span id="author"></span> · <span id="createdAt"></span></p>
+      <div class="btn-group" id="postActions" style="display: none;">
+        <button id="editBtn">수정</button>
+        <button id="deleteBtn">삭제</button>
+      </div>
+    </div>
+
+    <!-- 게시글 내용 -->
+    <div id="postContentWrapper">
+      <p id="content"></p>
+    </div>
+
+    <!-- 수정 폼 -->
+    <div id="editForm" style="display: none;">
+      <textarea id="editContent" rows="6"></textarea>
+      <div class="btn-group">
+        <button onclick="submitEdit()">수정 완료</button>
+        <button onclick="cancelEdit()">취소</button>
+      </div>
+    </div>
+
+    <!-- 목록 버튼 -->
+    <button id="backBtn" onclick="location.href='/board.html'">&larr; 목록으로</button>
+
+    <!-- 댓글 영역 -->
+    <hr />
+    <h3>💬 댓글</h3>
+    <div id="commentList"></div>
+
+    <div class="comment-input">
+      <textarea id="newComment" rows="4" placeholder="댓글을 입력하세요"></textarea>
+      <button onclick="submitComment()">댓글 등록</button>
+    </div>
+  </div>
+
+  <script>
+    const postId = new URLSearchParams(location.search).get('id');
+    let currentUserId = null;
+    let isAdmin = false;
+
+    async function loadPost() {
+      const userRes = await fetch('/auth/me', { credentials: 'include' });
+      const userData = await userRes.json();
+      currentUserId = userData.user.id;
+      isAdmin = userData.user.isAdmin;
+
+      const postRes = await fetch(`/post/${postId}`, { credentials: 'include' });
+      const post = await postRes.json();
+
+      document.getElementById('title').innerText = post.title;
+      document.getElementById('author').innerText = post.authorName;
+      document.getElementById('createdAt').innerText = new Date(post.createdAt).toLocaleDateString();
+      document.getElementById('content').innerText = post.content;
+
+      if (post.authorId === currentUserId || isAdmin) {
+        document.getElementById('postActions').style.display = 'flex';
+        enableEdit(post);
+        enableDelete(postId);
+      }
+
+      loadComments();
+    }
+
+    function enableEdit(post) {
+      document.getElementById('editBtn').onclick = () => {
+        document.getElementById('editForm').style.display = 'block';
+        document.getElementById('postContentWrapper').style.display = 'none';
+        document.getElementById('editContent').value = post.content;
+      };
+    }
+
+    function cancelEdit() {
+      document.getElementById('editForm').style.display = 'none';
+      document.getElementById('postContentWrapper').style.display = 'block';
+    }
+
+    function submitEdit() {
+      const content = document.getElementById('editContent').value.trim();
+      if (!content) return alert('내용을 입력하세요.');
+
+      fetch(`/post/${postId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content })
+      }).then(res => {
+        if (!res.ok) throw new Error();
+        alert('수정 완료');
+        location.reload();
+      }).catch(() => alert('수정 실패'));
+    }
+
+    function enableDelete(postId) {
+      document.getElementById('deleteBtn').onclick = () => {
+        if (confirm('정말 삭제하시겠습니까?')) {
+          fetch(`/post/${postId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          }).then(res => {
+            if (res.ok) {
+              alert('삭제 완료');
+              location.href = '/board.html';
+            } else {
+              alert('삭제 실패');
+            }
+          });
+        }
+      }
+    }
+
+    function loadComments() {
+      fetch(`/comment?postId=${postId}`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(comments => {
+          const list = document.getElementById('commentList');
+          list.innerHTML = '';
+          comments.forEach(comment => {
+            const div = document.createElement('div');
+            div.className = 'comment-item';
+            const isOwner = comment.authorId === currentUserId;
+            const canDelete = isOwner || isAdmin;
+            div.innerHTML = `
+              <div class="comment-meta">
+                <span class="info">${comment.authorName}</span>
+                <span class="date">${new Date(comment.createdAt).toLocaleDateString()}</span>
+              </div>
+              <p class="comment-text">${comment.content}</p>
+              <div class="comment-actions">
+                ${isOwner ? `<button onclick="editComment('${comment._id}', '${comment.content.replace(/'/g, "\\'")}')">수정</button>` : ''}
+                ${canDelete ? `<button onclick="deleteComment('${comment._id}')">삭제</button>` : ''}
+              </div>
+            `;
+            list.appendChild(div);
+          });
+        });
+    }
+
+    function submitComment() {
+      const content = document.getElementById('newComment').value.trim();
+      if (!content) return alert('댓글 내용을 입력하세요.');
+
+      fetch('/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ postId, content })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        document.getElementById('newComment').value = '';
+        loadComments();
+      })
+      .catch(() => alert('댓글 등록 실패'));
+    }
+
+    function editComment(id, oldContent) {
+      const newContent = prompt('댓글을 수정하세요:', oldContent);
+      if (!newContent || newContent.trim() === oldContent) return;
+
+      fetch(`/comment/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: newContent.trim() })
+      }).then(() => loadComments())
+        .catch(() => alert('댓글 수정 실패'));
+    }
+
+    function deleteComment(id) {
+      if (!confirm('댓글을 삭제하시겠습니까?')) return;
+
+      fetch(`/comment/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      }).then(() => loadComments())
+        .catch(() => alert('댓글 삭제 실패'));
+    }
+
+    loadPost();
+  </script>
+</body>
+</html>
