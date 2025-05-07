@@ -68,14 +68,13 @@
   </div>
 
   <script>
-    const API_BASE_URL = "https://my-login-project.onrender.com";
     let selectedCustomerName = null;
-
+  
     fetch('/components/header.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById('common-header').innerHTML = html;
-        return fetch(`${API_BASE_URL}/auth/me`, { credentials: 'include' });
+        return fetch('/auth/me', { credentials: 'include' });
       })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => {
@@ -86,19 +85,19 @@
         alert('로그인이 필요합니다.');
         location.href = '/index.html';
       });
-
+  
     function loadCustomers() {
-      fetch(`${API_BASE_URL}/api/customers`, { credentials: 'include' })
+      fetch('/api/customers', { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
           const list = document.getElementById('customerList');
           list.innerHTML = '';
-
+  
           data.forEach(customer => {
             const totalDeposit = (customer.deposits || []).reduce((sum, d) => sum + (parseInt(d.amount) || 0), 0);
             const totalWithdraw = (customer.withdraws || []).reduce((sum, d) => sum + (parseInt(d.amount) || 0), 0);
             const net = totalDeposit - totalWithdraw;
-
+  
             const div = document.createElement('div');
             div.className = 'customer';
             div.setAttribute('data-progress', customer.progress || '');
@@ -119,7 +118,7 @@
           });
         });
     }
-
+  
     function initNewCustomer() {
       selectedCustomerName = null;
       document.getElementById('details').classList.add('active', 'slide-in');
@@ -133,7 +132,7 @@
       document.getElementById('withdrawList').innerHTML = '';
       updateTotals();
     }
-
+  
     function selectCustomer(customer) {
       selectedCustomerName = customer.name;
       const detailPanel = document.getElementById('details');
@@ -143,12 +142,12 @@
       document.getElementById('joinDate').value = customer.joinDate?.slice(0, 10);
       document.getElementById('progress').value = customer.progress || '1일차';
       document.getElementById('account').value = customer.account || '';
-
+  
       const depositList = document.getElementById('depositList');
       const withdrawList = document.getElementById('withdrawList');
       depositList.innerHTML = '';
       withdrawList.innerHTML = '';
-
+  
       (customer.deposits || []).forEach(item => {
         const div = document.createElement('div');
         div.className = 'history-item';
@@ -158,7 +157,7 @@
           <button onclick="this.parentNode.remove(); updateTotals()">삭제</button>`;
         depositList.appendChild(div);
       });
-
+  
       (customer.withdraws || []).forEach(item => {
         const div = document.createElement('div');
         div.className = 'history-item';
@@ -168,10 +167,10 @@
           <button onclick="this.parentNode.remove(); updateTotals()">삭제</button>`;
         withdrawList.appendChild(div);
       });
-
+  
       updateTotals();
     }
-
+  
     function addHistory(type) {
       const list = document.getElementById(type + 'List');
       const now = new Date().toISOString().slice(0, 10);
@@ -183,51 +182,51 @@
         <button onclick="this.parentNode.remove(); updateTotals()">삭제</button>`;
       list.appendChild(div);
     }
-
+  
     function updateTotals() {
       let totalDeposit = 0;
       let totalWithdraw = 0;
-
+  
       document.querySelectorAll('#depositList .history-item').forEach(item => {
         const val = parseInt(item.querySelector('input[type="number"]').value || 0);
         totalDeposit += val;
       });
-
+  
       document.querySelectorAll('#withdrawList .history-item').forEach(item => {
         const val = parseInt(item.querySelector('input[type="number"]').value || 0);
         totalWithdraw += val;
       });
-
+  
       document.getElementById('totalDeposit').value = `${totalDeposit.toLocaleString()}원`;
       document.getElementById('totalWithdraw').value = `${totalWithdraw.toLocaleString()}원`;
       document.getElementById('net').value = `${(totalDeposit - totalWithdraw).toLocaleString()}원`;
     }
-
+  
     function saveCustomer() {
       const name = document.getElementById('name').value.trim();
       const joinDate = document.getElementById('joinDate').value;
       const progress = document.getElementById('progress').value;
       const account = document.getElementById('account').value;
-
+  
       if (!name || !joinDate) {
         alert('이름과 가입일은 필수입니다.');
         return;
       }
-
+  
       const deposits = Array.from(document.querySelectorAll('#depositList .history-item')).map(p => {
         const date = p.querySelector('input[type="date"]').value;
         const amount = parseInt(p.querySelector('input[type="number"]').value);
         return { date, amount: isNaN(amount) ? 0 : amount };
       });
-
+  
       const withdraws = Array.from(document.querySelectorAll('#withdrawList .history-item')).map(p => {
         const date = p.querySelector('input[type="date"]').value;
         const amount = parseInt(p.querySelector('input[type="number"]').value);
         return { date, amount: isNaN(amount) ? 0 : amount };
       });
-
+  
       const customerData = { name, joinDate, progress, account, deposits, withdraws };
-      fetch(`${API_BASE_URL}/api/customers`, {
+      fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -247,18 +246,18 @@
         else alert('저장에 실패했습니다.');
       });
     }
-
+  
     function deleteCustomer() {
       const name = document.getElementById('name').value.trim();
       if (!name) return alert('삭제할 고객 이름이 없습니다.');
-
+  
       const confirmText = prompt(`정말로 [${name}] 고객을 삭제하시려면 "삭제한다"를 입력하세요.`);
       if (confirmText !== '삭제한다') {
         alert('삭제가 취소되었습니다.');
         return;
       }
-
-      fetch(`${API_BASE_URL}/api/customers/${encodeURIComponent(name)}`, {
+  
+      fetch(`/api/customers/${encodeURIComponent(name)}`, {
         method: 'DELETE',
         credentials: 'include'
       })
@@ -278,5 +277,6 @@
       });
     }
   </script>
+  
 </body>
 </html>
